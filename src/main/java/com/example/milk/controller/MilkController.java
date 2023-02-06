@@ -1,6 +1,5 @@
 package com.example.milk.controller;
 
-import com.alibaba.fastjson.JSONObject;
 import com.example.milk.entity.Milk;
 import com.example.milk.entity.res.ResponseBean;
 import com.example.milk.service.MilkService;
@@ -8,19 +7,14 @@ import com.example.milk.utils.FtpUtil;
 import com.example.milk.utils.RedisUtils;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import org.apache.commons.codec.digest.Md5Crypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.Collections;
-import java.util.Map;
 
 @Slf4j
 @RestController
@@ -30,47 +24,19 @@ public class MilkController {
     private MilkService milkService;
 
     @GetMapping({"/getRedis"})
-    public ResponseBean getRedis() {
-        String name = RedisUtils.get("name");
+    public ResponseBean getRedis(String key) {
+        String name = RedisUtils.get(key);
         return ResponseBean.success(name);
     }
 
     @PostMapping({"/setRedis"})
-    public ResponseBean setRedis() throws Exception {
-        String s = RedisUtils.set("name", 30, "JiangJunYe");
-        String url = "https://api.weixin.qq.com/sns/jscode2session?appid=APPID&secret=SECRET&js_code=JSCODE&grant_type=authorization_code";
-        OkHttpClient httpClient = new OkHttpClient();
-
-        MediaType mediaType = MediaType.parse("application/json;charset=UTF-8");
-
-        String post = "{\"test\":123}";
-        okhttp3.RequestBody requestBody = okhttp3.RequestBody.create(mediaType, post);
-
-        Request request = new Request.Builder()
-                .post(requestBody)
-                .url(url)
-                .build();
-        Response response = httpClient.newCall(request).execute();
+    public ResponseBean setRedis(String key, String value, @Nullable Integer timeSeconds) {
+        if (null == timeSeconds) {
+            String s = RedisUtils.set(key, value);
+            return ResponseBean.success(s);
+        }
+        String s = RedisUtils.setex(key, timeSeconds, value);
         return ResponseBean.success(s);
-    }
-
-    @GetMapping({"/get"})
-    public ResponseBean get(String code) throws Exception {
-        String url = "https://api.weixin.qq.com/sns/jscode2session?appid=wx679b94a2d1e86cad" +
-                "&secret=4c28d35d307acbf9279be0020c043151&js_code=" + code + "&grant_type=authorization_code";
-        OkHttpClient httpClient = new OkHttpClient();
-        log.error("------->>>请求url:{}", url);
-        String token = Md5Crypt.md5Crypt("11111111111111111111".getBytes());
-        log.error("-------------------------token:{}", token);
-        Request request = new Request.Builder()
-                .get()
-                .url(url)
-                .build();
-        Response response = httpClient.newCall(request).execute();
-//        Object parse = JSON.parse(response.body().string());
-        Map map = JSONObject.parseObject(response.body().string(), Map.class);
-        log.error("------->>>{}", JSONObject.toJSONString(map));
-        return ResponseBean.success(map);
     }
 
     @GetMapping({"/queryAllMilk"})

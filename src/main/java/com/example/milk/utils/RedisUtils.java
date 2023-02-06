@@ -43,7 +43,7 @@ public class RedisUtils {
             jedis.select(0);//默认选择第0个数据库
             value = jedis.get(key);
         } catch (Exception e) {
-            log.error("错误日志："+e.getMessage());
+            log.error("错误日志：" + e.getMessage());
         } finally {
             jedis.close();
         }
@@ -57,14 +57,34 @@ public class RedisUtils {
      * @param value   值
      * @return
      */
-    public static String set(String key, Integer seconds, String value) {
+    public static String setex(String key, Integer seconds, String value) {
         Jedis jedis = null;
         String result = null;
         try {
             jedis = jedisPool.getResource();//获取一个jedis实例
             result = jedis.setex(key, seconds, value);
         } catch (Exception e) {
-            log.error("错误日志："+e.getMessage());
+            log.error("错误日志：" + e.getMessage());
+        } finally {
+            jedis.close();
+        }
+        return result;
+    }
+
+    /**
+     * 存储数据
+     * @param key   键
+     * @param value 值
+     * @return
+     */
+    public static String set(String key, String value) {
+        Jedis jedis = null;
+        String result = null;
+        try {
+            jedis = jedisPool.getResource();//获取一个jedis实例
+            result = jedis.set(key, value);
+        } catch (Exception e) {
+            log.error("错误日志：" + e.getMessage());
         } finally {
             jedis.close();
         }
