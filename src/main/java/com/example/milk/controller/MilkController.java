@@ -2,16 +2,19 @@ package com.example.milk.controller;
 
 import com.example.milk.entity.Milk;
 import com.example.milk.entity.res.ResponseBean;
+import com.example.milk.mqtt.msgHandle.MqttGateway;
 import com.example.milk.service.MilkService;
 import com.example.milk.utils.FtpUtil;
 import com.example.milk.utils.RedisUtils;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Nullable;
+import javax.annotation.Resource;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.Collections;
@@ -22,11 +25,20 @@ import java.util.Collections;
 public class MilkController {
     @Autowired
     private MilkService milkService;
+    @Resource
+    private MqttGateway mqttGateway;
 
     @GetMapping({"/getRedis"})
     public ResponseBean getRedis(String key) {
         String name = RedisUtils.get(key);
         return ResponseBean.success(name);
+    }
+
+    @PostMapping("/mqttSend")
+    public ResponseBean sendMqttMsg(String topic, String message){
+        MqttMessage mqttMessage = new MqttMessage();
+        mqttGateway.sendToMqtt(topic, message);
+       return ResponseBean.success("发送消息成功");
     }
 
     @PostMapping({"/setRedis"})
